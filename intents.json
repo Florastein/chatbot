@@ -482,7 +482,7 @@
         ""
       ]
     },
-    {
+{
       "tag": "personality",
       "patterns": [
         "Who are you",
@@ -496,6 +496,91 @@
       "responses": [
         "I'm Sam, your local desktop assistant: warm, practical, and a little playful. I like keeping things simple, one task at a time. I'm software, so I don't have feelings or a life outside this app. I can help with notes, tasks, files, and a few desktop tools."
       ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "select_result",
+      "patterns": [
+        "The first one",
+        "The second one",
+        "The third one",
+        "The last one",
+        "Number 1",
+        "Number 2",
+        "Number 3",
+        "Select the first",
+        "Select the second",
+        "Pick the first",
+        "Pick the second",
+        "Choose the first",
+        "Choose the second",
+        "That one",
+        "This one",
+        "Open that one",
+        "Open this one"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "link_item",
+      "patterns": [
+        "Link it to a task",
+        "Link it to my task",
+        "Link to task",
+        "Add to my tasks",
+        "Create a task for it",
+        "Make a task from it",
+        "Link it to a note",
+        "Link to note",
+        "Add to my notes",
+        "Create a note for it",
+        "Make a note from it",
+        "Link it to my project",
+        "Link to project",
+        "Add to project",
+        "This is my project"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "rename_item",
+      "patterns": [
+        "Call it",
+        "Rename it",
+        "Rename that",
+        "Name it",
+        "Call that",
+        "Change the name",
+        "Call the task",
+        "Rename the task",
+        "Call the note",
+        "Rename the note"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "undo_action",
+      "patterns": [
+        "Undo",
+        "Undo that",
+        "Reverse that",
+        "Take it back",
+        "Cancel that",
+        "Delete that",
+        "Remove that"
+      ],
+      "responses": [],
       "context": [
         ""
       ]

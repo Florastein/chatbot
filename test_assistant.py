@@ -50,6 +50,15 @@ class FindFilesTests(unittest.TestCase):
         self.assertFalse(limited)
         self.assertTrue(find_files(self.root, ".py", limit=1)[1])
 
+    def test_matches_folders_and_defaults_to_home(self):
+        (self.root / "reports").mkdir()
+        result = search_files(self.root, "report")
+        self.assertEqual(result["paths"], [str((self.root / "reports").resolve())])
+        self.assertFalse(result["limited"])
+        with patch("tool_actions.Path.home", return_value=self.root):
+            result = search_files(query="reports")
+        self.assertEqual(result["paths"], [str((self.root / "reports").resolve())])
+
     def test_empty_query_raises(self):
         with self.assertRaises(ValueError):
             find_files(self.root, "")
@@ -214,6 +223,65 @@ class CustomAssistantTests(unittest.TestCase):
             reply = self.assistant.reply("open chrome")
             self.assertIn("not available", reply.lower())
             mock.assert_not_called()
+
+    def test_multi_turn_find_file(self):
+        """Regression: multi-turn file search retains collected parameters."""
+        # The active user's home directory is implicit; only the query is needed.
+        reply = self.assistant.reply("find a file")
+        self.assertIn("filename", reply.lower())
+        self.assertTrue(self.assistant.state.is_pending())
+        self.assertEqual(self.assistant.state.pending_tag, "find_file")
+
+        # The second turn supplies the query and uses the home-directory default.
+        reply = self.assistant.reply("report.txt")
+        self.assertFalse(self.assistant.state.is_pending())
+        self.assertIsInstance(reply, str)
+
+    def test_find_file_placeholder_query(self):
+        """Placeholder words like 'file' are treated as missing input."""
+        reply = self.assistant.reply("find a file")
+        self.assertIn("filename", reply.lower())
+        self.assertTrue(self.assistant.state.is_pending())
+
+
+class GuiQueueTests(unittest.TestCase):
+    """Regression tests for separate event queues in GUI."""
+
+    def test_separate_queues_prevent_cross_consumption(self):
+        """Chat and search events go to different queues."""
+        import queue
+
+        events = queue.Queue()
+        search_events = queue.Queue()
+
+        # Simulate chat result
+        events.put(("reply", "Hello!", None))
+        # Simulate search result
+        search_events.put(("search", (["/path/to/file"], False), None))
+
+        # Poll chat queue - should only get chat event
+        kind, value, error = events.get_nowait()
+        self.assertEqual(kind, "reply")
+        self.assertEqual(value, "Hello!")
+        self.assertTrue(events.empty())
+
+        # Poll search queue - should only get search event
+        kind, value, error = search_events.get_nowait()
+        self.assertEqual(kind, "search")
+        self.assertEqual(value, (["/path/to/file"], False))
+        self.assertTrue(search_events.empty())
+
+        # Verify queues don't interfere
+        search_events.put(("search", (["/another"], True), None))
+        events.put(("reply", "Another reply", None))
+
+        kind, value, error = events.get_nowait()
+        self.assertEqual(kind, "reply")
+        self.assertEqual(value, "Another reply")
+
+        kind, value, error = search_events.get_nowait()
+        self.assertEqual(kind, "search")
+        self.assertEqual(value, (["/another"], True))
 
 
 if __name__ == "__main__":

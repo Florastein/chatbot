@@ -12,19 +12,19 @@ The goal is practical: an assistant whose behavior you can understand, whose dat
 
 ## What You Can Do
 
-| Capability | Example request | Result |
-| --- | --- | --- |
-| Save notes | `save a note` | A follow-up collects the text to store. |
-| Create tasks | `add a task` | A follow-up collects the task description. |
-| Retrieve notes | `show my notes` | Saved notes appear in the conversation. |
-| Retrieve tasks | `show my tasks` | The assistant returns your task list. |
-| Open utilities | `open notepad` | A supported app is launched through an allowlist. |
-| Search filenames | `find report.txt` | The assistant attempts to extract search details and asks for missing information. |
-| Browse directories | `list directory` | Directory entries are listed. |
-| Check the clock | `what time is it` | The current local date, time, and timezone are returned. |
-| Check the environment | `system info` | The platform, Python version, and machine architecture are shown. |
-| Inspect Python | Attach a Python source file | Syntax errors, functions, and classes are reported. |
-| Exchange short messages | `good morning bestie` | Recognized conversational intents receive predefined responses. |
+| Capability               | Example request             | Result                                                                                         |
+| ------------------------ | --------------------------- | ---------------------------------------------------------------------------------------------- |
+| Save notes               | `save a note`               | A follow-up collects the text to store.                                                        |
+| Create tasks             | `add a task`                | A follow-up collects the task description.                                                     |
+| Retrieve notes           | `show my notes`             | Saved notes appear in the conversation.                                                        |
+| Retrieve tasks           | `show my tasks`             | The assistant returns your task list.                                                          |
+| Open utilities           | `open notepad`              | A supported app is launched through an allowlist.                                              |
+| Search files and folders | `find report.txt`           | Searches the active user's home directory by default; an explicit folder can also be supplied. |
+| Browse directories       | `list directory`            | Directory entries are listed.                                                                  |
+| Check the clock          | `what time is it`           | The current local date, time, and timezone are returned.                                       |
+| Check the environment    | `system info`               | The platform, Python version, and machine architecture are shown.                              |
+| Inspect Python           | Attach a Python source file | Syntax errors, functions, and classes are reported.                                            |
+| Exchange short messages  | `good morning bestie`       | Recognized conversational intents receive predefined responses.                                |
 
 Recognition is approximate. Rephrase an unrecognized request, use a slash command where available, or use the dedicated controls.
 
@@ -148,16 +148,16 @@ Valid syntax does not establish correct runtime behavior. Dependency problems, l
 
 Slash commands provide a predictable route to common actions.
 
-| Command | Purpose |
-| --- | --- |
-| `/note TEXT` | Save the supplied text as a note. |
-| `/todo TEXT` | Add the supplied text as a task. |
-| `/notes` | List saved notes. |
-| `/todos` | List saved tasks. |
-| `/time` | Show the local date and time. |
-| `/open notepad` | Request the supported text-editor launch. |
-| `/open calculator` | Request the supported calculator launch. |
-| `/help` | Display command help. |
+| Command            | Purpose                                   |
+| ------------------ | ----------------------------------------- |
+| `/note TEXT`       | Save the supplied text as a note.         |
+| `/todo TEXT`       | Add the supplied text as a task.          |
+| `/notes`           | List saved notes.                         |
+| `/todos`           | List saved tasks.                         |
+| `/time`            | Show the local date and time.             |
+| `/open notepad`    | Request the supported text-editor launch. |
+| `/open calculator` | Request the supported calculator launch.  |
+| `/help`            | Display command help.                     |
 
 For example:
 
@@ -209,14 +209,8 @@ An individual entry follows this format:
 ```json
 {
   "tag": "greeting",
-  "patterns": [
-    "Hello",
-    "Hey there",
-    "Good morning"
-  ],
-  "responses": [
-    "Hello! What would you like to get done?"
-  ],
+  "patterns": ["Hello", "Hey there", "Good morning"],
+  "responses": ["Hello! What would you like to get done?"],
   "context": [""]
 }
 ```
@@ -308,18 +302,18 @@ For a manual check, save and list a note, create a task, search a chosen folder,
 
 ## Troubleshooting
 
-| Symptom | What to check |
-| --- | --- |
-| Python is not found | Verify installation; try `py` on Windows or `python3` on Linux. |
-| Tkinter cannot be imported | Install or enable Tkinter for the Python version being used. |
-| The GUI cannot open a display | Run from an interactive desktop session. |
-| A request is not recognized | Rephrase, use a direct command, or add examples and restart. |
-| The assistant expects the wrong detail | Say `cancel`, then begin again. |
-| Search returns no matches | Check the folder, filename, exclusions, and search limits. |
-| An attachment is rejected | Use UTF-8 text within the size limit and without binary content. |
-| A Linux utility does not open | Check `xdg-open` and desktop handlers; mappings may need adaptation. |
-| Data cannot be saved | Check write permissions and whether another process has locked the database. |
-| Console output fails on a filename | Use a UTF-8 terminal or set `PYTHONIOENCODING=utf-8`. |
+| Symptom                                | What to check                                                                |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| Python is not found                    | Verify installation; try `py` on Windows or `python3` on Linux.              |
+| Tkinter cannot be imported             | Install or enable Tkinter for the Python version being used.                 |
+| The GUI cannot open a display          | Run from an interactive desktop session.                                     |
+| A request is not recognized            | Rephrase, use a direct command, or add examples and restart.                 |
+| The assistant expects the wrong detail | Say `cancel`, then begin again.                                              |
+| Search returns no matches              | Check the folder, filename, exclusions, and search limits.                   |
+| An attachment is rejected              | Use UTF-8 text within the size limit and without binary content.             |
+| A Linux utility does not open          | Check `xdg-open` and desktop handlers; mappings may need adaptation.         |
+| Data cannot be saved                   | Check write permissions and whether another process has locked the database. |
+| Console output fails on a filename     | Use a UTF-8 terminal or set `PYTHONIOENCODING=utf-8`.                        |
 
 ## Where It Goes Next
 

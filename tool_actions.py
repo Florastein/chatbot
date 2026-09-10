@@ -102,9 +102,9 @@ def open_application(app_name: str) -> dict[str, Any]:
     return {"reply": f"Opened {app_name}.", "ok": True}
 
 
-def search_files(folder: str, query: str, limit: int = 200) -> dict[str, Any]:
-    """Walk *folder* and return paths matching *query* (case-insensitive)."""
-    root = Path(folder).resolve()
+def search_files(folder: str | Path | None = None, query: str = "", limit: int = 200) -> dict[str, Any]:
+    """Search the active user's home tree for matching files and folders."""
+    root = Path(folder or Path.home()).expanduser().resolve()
     if not root.is_dir():
         return {"reply": "Folder does not exist.", "ok": False, "paths": [], "limited": False}
     if not query.strip():
@@ -112,21 +112,32 @@ def search_files(folder: str, query: str, limit: int = 200) -> dict[str, Any]:
     skip = {".git", "node_modules", ".venv", "__pycache__"}
     results: list[str] = []
     visited = 0
+    def finish(limited: bool = False) -> dict[str, Any]:
+        if limited:
+            reply = "\n".join(results) + "\nSearch limit reached."
+        else:
+            reply = "\n".join(results) or "No matching files or folders found."
+        return {"reply": reply, "ok": True, "paths": results, "limited": limited}
+
     for directory, dirs, files in os.walk(root, followlinks=False):
         dirs[:] = [d for d in dirs if d not in skip
                    and not Path(directory, d).is_symlink()
                    and not Path(directory, d).is_junction()]
+        for dirname in dirs:
+            visited += 1
+            if query.casefold() in dirname.casefold():
+                results.append(str(Path(directory, dirname).resolve()))
+            if len(results) >= limit or visited >= 200000:
+                return finish(True)
         for fname in files:
             visited += 1
             if query.casefold() in fname.casefold():
                 path = Path(directory, fname).resolve()
                 if path.is_relative_to(root):
                     results.append(str(path))
-            if len(results) >= limit or visited >= 50000:
-                return {"reply": "\n".join(results) + ("\nSearch limit reached." if True else ""),
-                        "ok": True, "paths": results, "limited": True}
-    return {"reply": "\n".join(results) or "No matching files found.",
-            "ok": True, "paths": results, "limited": False}
+            if len(results) >= limit or visited >= 200000:
+                return finish(True)
+    return finish()
 
 
 def get_system_info() -> dict[str, Any]:

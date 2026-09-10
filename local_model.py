@@ -52,10 +52,17 @@ class IntentModel:
         return cls({'version': 1, 'vocabulary': sorted(vocabulary), 'weights': weights})
 
     def predict(self, text):
+        """Classify *text* and return ``(tag, confidence, ranked)``.
+
+        *ranked* is a list of ``(probability, tag)`` pairs in descending order.
+        It is always returned so callers can inspect competing candidates
+        without re-running the softmax.
+        Returns ``(None, confidence, ranked)`` when the model is not confident.
+        """
         words = tokens(text)
         known = [word for word in words if word in self.vocabulary]
         if not known or len(known) / max(1, len(words)) < 0.5:
-            return None, 0.0
+            return None, 0.0, []
         scores = {tag: sum(weight[word] for word in known)
                   for tag, weight in self.data['weights'].items()}
         maximum = max(scores.values())
@@ -64,8 +71,8 @@ class IntentModel:
         ranked = sorted(((p / total, tag) for tag, p in probabilities.items()), reverse=True)
         confidence, tag = ranked[0]
         if confidence < 0.55 or confidence - ranked[1][0] < 0.15:
-            return None, confidence
-        return tag, confidence
+            return None, confidence, ranked
+        return tag, confidence, ranked
 
 
 def train_and_save(source=INTENTS_PATH, destination=MODEL_PATH):

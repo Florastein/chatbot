@@ -536,7 +536,7 @@ class AssistantApp:
         folder_ln = tk.Label(body, text="Folder", bg=Palette.SURFACE, fg=Palette.MUTED,
                              font=self.fonts["small_b"])
         folder_ln.grid(row=0, column=0, sticky="w", pady=(0, 4))
-        self.folder = tk.StringVar(value=self.store.setting("folder", str(Path.home() / "Documents")))
+        self.folder = tk.StringVar(value=self.store.setting("folder", str(Path.home())))
         folder_row = tk.Frame(body, bg=Palette.SURFACE)
         folder_row.grid(row=1, column=0, sticky="ew")
         folder_row.grid_columnconfigure(0, weight=1)

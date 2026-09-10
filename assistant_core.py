@@ -72,6 +72,12 @@ class Store:
         with self.connect() as db:
             db.execute("DELETE FROM items WHERE id=?", (item_id,))
 
+    def update(self, item_id, content):
+        if not content.strip():
+            raise ValueError("Enter some text first.")
+        with self.connect() as db:
+            db.execute("UPDATE items SET content=? WHERE id=?", (content.strip(), item_id))
+
     def setting(self, key, default=""):
         with self.connect() as db:
             row = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
@@ -86,10 +92,11 @@ class Store:
 # File helpers (cross-platform)
 # ---------------------------------------------------------------------------
 
-def find_files(folder, query, limit=200):
-    """Walk *folder* and return ``(paths, limited)`` matching *query*."""
+def find_files(folder=None, query="", limit=200):
+    """Search a folder, defaulting to the active user's home directory."""
+    folder = folder or Path.home()
     if not Path(folder).is_dir() or not query.strip():
-        raise ValueError("Choose a folder and enter part of a filename.")
+        raise ValueError("Choose a folder and enter part of a filename or folder name.")
     from tool_actions import search_files
     result = search_files(folder, query, limit)
     return result["paths"], result["limited"]
