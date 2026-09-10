@@ -11,10 +11,11 @@ import math
 import os
 import re
 import uuid
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from local_model import load_model, tokens
 from tool_actions import Tool, ToolRegistry, create_default_registry
@@ -68,7 +69,6 @@ def _extract_folder(text: str) -> str | None:
         if p.is_dir():
             return str(p)
     # Look for common folder references
-    import os
     home = Path.home()
     for name in ("desktop", "documents", "downloads", "home", "tmp", "temp"):
         if name in text.casefold():
@@ -126,6 +126,15 @@ def _extract_new_name(text: str) -> str | None:
     return None
 
 
+def _extract_inspect_source(text: str) -> str | None:
+    """Strip action-verb prefixes and return any remaining text as source code."""
+    cleaned = re.sub(
+        r"^(?:check|inspect|analyze|analyse|parse|review|debug)\s+(?:my\s+|this\s+|the\s+)?(?:code|python|file|source)?\s*",
+        "", text, flags=re.IGNORECASE,
+    ).strip()
+    return cleaned if cleaned else None
+
+
 def extract_detail(tag: str, text: str) -> dict[str, str]:
     """Return a dict of parameter-name -> value for the given intent tag."""
     extractors: dict[str, dict[str, Any]] = {
@@ -134,6 +143,7 @@ def extract_detail(tag: str, text: str) -> dict[str, str]:
         "list_dir": {"path": _extract_path},
         "add_note": {},
         "add_task": {},
+        "inspect_code": {"source": _extract_inspect_source},
         "select_result": {"index": lambda t: str(_extract_index(t) or "")},
         "link_item": {"index": lambda t: str(_extract_index(t) or ""), "target_kind": _extract_link_target},
         "rename_item": {"index": lambda t: str(_extract_index(t) or ""), "new_name": _extract_new_name},
@@ -196,8 +206,8 @@ class ConversationState:
     active_project_notes: list[int] = field(default_factory=list)  # note IDs
     active_project_tasks: list[int] = field(default_factory=list)  # task IDs
     
-    # Action history for undo
-    action_history: list[ActionRecord] = field(default_factory=list)
+    # Action history for undo (deque gives O(1) append and automatic eviction)
+    action_history: deque = field(default_factory=lambda: deque(maxlen=50))
     
     # Disambiguation state
     pending_disambiguation: dict[str, Any] | None = None
@@ -220,10 +230,7 @@ class ConversationState:
             timestamp=datetime.now(),
             undo_data=undo_data or {},
         )
-        self.action_history.append(action)
-        # Keep last 50 actions
-        if len(self.action_history) > 50:
-            self.action_history.pop(0)
+        self.action_history.append(action)  # deque(maxlen=50) auto-evicts oldest
 
     def get_last_action(self) -> ActionRecord | None:
         if self.action_history:
@@ -274,11 +281,19 @@ class ConversationState:
 class CustomAssistant:
     """Classify intent, extract details, and call tools."""
 
-    def __init__(self, store: Any = None, registry: ToolRegistry | None = None) -> None:
+    def __init__(
+        self,
+        store: Any = None,
+        registry: ToolRegistry | None = None,
+        on_save: Callable[[str], None] | None = None,
+    ) -> None:
         self.store = store
         self.model = load_model()
         self.registry = registry or create_default_registry()
         self.state = ConversationState()
+        # Optional callback fired after every successful _save_item(kind, …).
+        # The GUI uses this to refresh the Notes / Tasks sidebar without polling.
+        self._on_save = on_save
         # Load canned responses for non-tool intents (greeting, goodbye, etc.)
         import json
         self.responses: dict[str, list[str]] = {}
@@ -313,8 +328,15 @@ class CustomAssistant:
             self.state.reset()
             return "Cancelled."
 
-        # Handle negation patterns
-        if re.search(r"\b(don't|do not|never)\b", text, re.IGNORECASE):
+        # Block negated action commands ("don't open notepad") but let through
+        # sentences where the negation modifies something else
+        # ("I don't know what I saved", "I don't remember").
+        _ACTION_VERBS = r"(?:open|launch|start|run|save|add|delete|remove|find|search)"
+        if re.search(
+            rf"\b(?:don't|do not|never)\b\s+{_ACTION_VERBS}",
+            text,
+            re.IGNORECASE,
+        ):
             return "No action taken."
 
         # Explicit command handling first (slash commands, explicit patterns)
@@ -328,13 +350,17 @@ class CustomAssistant:
         if self.state.is_pending():
             return self._handle_followup(text)
 
+        # If disambiguation was triggered, resolve it before anything else
+        if self.state.pending_disambiguation:
+            return self._handle_disambiguation(text)
+
         # Focused extraction rules for reference resolution, linking, etc.
         focused = self._try_focused_extraction(text)
         if focused is not None:
             return focused
 
-        # Naive Bayes for broader routing
-        tag, confidence = self.model.predict(text)
+        # Naive Bayes for broader routing — returns (tag, confidence, ranked)
+        tag, confidence, ranked = self.model.predict(text)
         if tag is None:
             # Verb-based heuristic fallback complements the ML model for
             # out-of-vocabulary app/file names ("open chrome").
@@ -342,8 +368,8 @@ class CustomAssistant:
             if tag is None:
                 return self._fallback_reply()
 
-        # Check for competing interpretations
-        competing = self._check_competing_intents(text, tag, confidence)
+        # Check for competing interpretations using the already-computed ranked list
+        competing = self._check_competing_intents(text, tag, confidence, ranked)
         if competing:
             return competing
 
@@ -449,34 +475,30 @@ class CustomAssistant:
 
         return None
 
-    def _check_competing_intents(self, text: str, primary_tag: str, primary_conf: float) -> str | None:
-        """If multiple intents are close in confidence, offer a specific choice."""
-        # Get top predictions
-        words = tokens(text)
-        known = [w for w in words if w in self.model.vocabulary]
-        if not known:
-            return None
-        scores = {tag: sum(self.model.data['weights'][tag].get(w, 0) for w in known)
-                  for tag in self.model.data['weights']}
-        maximum = max(scores.values())
-        probabilities = {tag: math.exp(score - maximum) for tag, score in scores.items()}
-        total = sum(probabilities.values())
-        ranked = sorted(((p / total, tag) for tag, p in probabilities.items()), reverse=True)
-        
-        # If top two are close, offer disambiguation
-        if len(ranked) >= 2:
-            conf1, tag1 = ranked[0]
-            conf2, tag2 = ranked[1]
-            if conf1 - conf2 < 0.2 and conf2 > 0.3:
-                # Store for disambiguation
-                self.state.pending_disambiguation = {
-                    "options": [(tag1, conf1), (tag2, conf2)],
-                    "original_text": text,
-                }
-                tag1_desc = self._intent_description(tag1)
-                tag2_desc = self._intent_description(tag2)
-                return f"I'm not sure — did you mean **{tag1_desc}** or **{tag2_desc}**? (Reply '1' or '2', or clarify)"
+    def _check_competing_intents(
+        self,
+        text: str,
+        primary_tag: str,
+        primary_conf: float,
+        ranked: list[tuple[float, str]],
+    ) -> str | None:
+        """If the top two predictions are close in confidence, offer a choice.
 
+        Uses the *ranked* list already computed by ``predict()`` so no
+        redundant softmax pass is needed.
+        """
+        if len(ranked) < 2:
+            return None
+        conf1, tag1 = ranked[0]
+        conf2, tag2 = ranked[1]
+        if conf1 - conf2 < 0.2 and conf2 > 0.3:
+            self.state.pending_disambiguation = {
+                "options": [(tag1, conf1), (tag2, conf2)],
+                "original_text": text,
+            }
+            tag1_desc = self._intent_description(tag1)
+            tag2_desc = self._intent_description(tag2)
+            return f"I'm not sure — did you mean **{tag1_desc}** or **{tag2_desc}**? (Reply '1' or '2', or clarify)"
         return None
 
     def _intent_description(self, tag: str) -> str:
@@ -792,7 +814,7 @@ class CustomAssistant:
 
         # If this follow-up is actually a *different* confident intent,
         # abandon the pending action rather than hijacking it.
-        new_tag, confidence = self.model.predict(text)
+        new_tag, confidence, _ranked = self.model.predict(text)
         if new_tag and new_tag != tag and confidence >= 0.6:
             self.state.reset()
             return self._dispatch(new_tag, text, confidence)
@@ -876,6 +898,9 @@ class CustomAssistant:
                     self.state.active_project_notes.append(1)  # placeholder ID
                 else:
                     self.state.active_project_tasks.append(1)
+            # Notify the GUI (or any listener) that a new item was saved
+            if self._on_save is not None:
+                self._on_save(kind)
             return result
         except ValueError as exc:
             return str(exc)

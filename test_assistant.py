@@ -284,5 +284,163 @@ class GuiQueueTests(unittest.TestCase):
         self.assertEqual(value, (["/another"], True))
 
 
+class NegationGuardTests(unittest.TestCase):
+    """Tighter negation guard should block direct action negations only."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.store = Store(Path(self.temp.name) / "test.db")
+        self.assistant = CustomAssistant(store=self.store)
+
+    def test_negated_action_blocked(self):
+        """'don't open notepad' must be blocked."""
+        reply = self.assistant.reply("don't open notepad")
+        self.assertEqual(reply, "No action taken.")
+
+    def test_negation_in_context_not_blocked(self):
+        """'I don't know what I saved' is NOT a blocked negation — it should
+        fall through to the model / fallback, not return 'No action taken.'"""
+        reply = self.assistant.reply("I don't know what I saved")
+        self.assertNotEqual(reply, "No action taken.")
+
+    def test_negated_save_blocked(self):
+        """'do not save' should be blocked."""
+        reply = self.assistant.reply("do not save anything please")
+        self.assertEqual(reply, "No action taken.")
+
+
+class DisambiguationFlowTests(unittest.TestCase):
+    """User is offered a choice when two intents are close; picking '1' executes it."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.store = Store(Path(self.temp.name) / "test.db")
+        self.assistant = CustomAssistant(store=self.store)
+
+    def test_disambiguation_state_set(self):
+        """If pending_disambiguation is set, the next reply handles the choice."""
+        # Artificially inject disambiguation state to avoid ML non-determinism
+        from custom_assistant import ConversationState
+        self.assistant.state.pending_disambiguation = {
+            "options": [("list_notes", 0.55), ("list_tasks", 0.45)],
+            "original_text": "show me my stuff",
+        }
+        # Choosing '1' should dispatch list_notes
+        reply = self.assistant.reply("1")
+        self.assertIsNone(self.assistant.state.pending_disambiguation)
+        # list_notes with empty store returns "Nothing saved yet."
+        self.assertIn("Nothing saved yet", reply)
+
+    def test_disambiguation_by_keyword(self):
+        """Replying with a keyword from the description also resolves it."""
+        self.assistant.state.pending_disambiguation = {
+            "options": [("list_notes", 0.55), ("list_tasks", 0.45)],
+            "original_text": "show me my stuff",
+        }
+        reply = self.assistant.reply("notes")
+        self.assertIsNone(self.assistant.state.pending_disambiguation)
+        self.assertIsInstance(reply, str)
+
+
+class UndoLinkItemTests(unittest.TestCase):
+    """Undo should remove a linked task created by link_item."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.store = Store(Path(self.temp.name) / "test.db")
+        self.assistant = CustomAssistant(store=self.store)
+
+    def test_undo_link_removes_task(self):
+        from custom_assistant import ActionRecord
+        from datetime import datetime
+
+        # Simulate a link_item action having been performed
+        task_text = "Review file: /tmp/report.txt"
+        self.store.add("task", task_text)
+        record = ActionRecord(
+            action_id="abc12345",
+            tag="link_item",
+            params={"item": "/tmp/report.txt", "target": "task"},
+            result={"reply": "Linked"},
+            timestamp=datetime.now(),
+            undo_data={"task_text": task_text, "kind": "task"},
+        )
+        self.assistant.state.action_history.append(record)
+
+        reply = self.assistant.reply("undo")
+        self.assertIn("Undid", reply)
+        # The linked task should be gone
+        remaining = self.store.items("task")
+        self.assertEqual(remaining, [])
+
+
+class SearchDepthLimitTests(unittest.TestCase):
+    """search_files must respect max_depth and not descend beyond it."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+
+    def test_file_beyond_max_depth_not_found(self):
+        from tool_actions import search_files
+
+        # Build a directory chain 14 levels deep with a target file at the end
+        deep = self.root
+        for i in range(14):
+            deep = deep / f"level{i}"
+        deep.mkdir(parents=True, exist_ok=True)
+        target = deep / "deep_target.txt"
+        target.touch()
+
+        # Default max_depth=12 must NOT find the file at depth 14
+        result = search_files(self.root, "deep_target", max_depth=12)
+        self.assertNotIn(str(target), result["paths"])
+
+    def test_file_within_max_depth_found(self):
+        from tool_actions import search_files
+
+        # File at depth 2 should always be found
+        shallow = self.root / "a" / "b"
+        shallow.mkdir(parents=True)
+        target = shallow / "shallow_target.txt"
+        target.touch()
+
+        result = search_files(self.root, "shallow_target", max_depth=12)
+        self.assertIn(str(target.resolve()), result["paths"])
+
+
+class OnSaveCallbackTests(unittest.TestCase):
+    """on_save callback must fire after a successful note/task save."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.store = Store(Path(self.temp.name) / "test.db")
+        self.saved_kinds: list[str] = []
+        self.assistant = CustomAssistant(
+            store=self.store,
+            on_save=self.saved_kinds.append,
+        )
+
+    def test_callback_fires_for_note(self):
+        self.assistant.reply("save a note")
+        self.assistant.reply("remember to water the plants")
+        self.assertEqual(self.saved_kinds, ["note"])
+
+    def test_callback_fires_for_task(self):
+        self.assistant.reply("add a task")
+        self.assistant.reply("finish the report")
+        self.assertEqual(self.saved_kinds, ["task"])
+
+    def test_callback_not_fired_on_list(self):
+        """Listing items must not trigger on_save."""
+        self.assistant.reply("show my notes")
+        self.assertEqual(self.saved_kinds, [])
+
+
 if __name__ == "__main__":
     unittest.main()

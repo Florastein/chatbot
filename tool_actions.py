@@ -102,8 +102,13 @@ def open_application(app_name: str) -> dict[str, Any]:
     return {"reply": f"Opened {app_name}.", "ok": True}
 
 
-def search_files(folder: str | Path | None = None, query: str = "", limit: int = 200) -> dict[str, Any]:
-    """Search the active user's home tree for matching files and folders."""
+def search_files(folder: str | Path | None = None, query: str = "", limit: int = 200,
+                 max_depth: int = 12) -> dict[str, Any]:
+    """Search the active user's home tree for matching files and folders.
+
+    *max_depth* limits how many directory levels are walked relative to *root*
+    (default 12).  The per-run visited-node cap of 50 000 is a secondary safety net.
+    """
     root = Path(folder or Path.home()).expanduser().resolve()
     if not root.is_dir():
         return {"reply": "Folder does not exist.", "ok": False, "paths": [], "limited": False}
@@ -112,6 +117,8 @@ def search_files(folder: str | Path | None = None, query: str = "", limit: int =
     skip = {".git", "node_modules", ".venv", "__pycache__"}
     results: list[str] = []
     visited = 0
+    root_depth = len(root.parts)
+
     def finish(limited: bool = False) -> dict[str, Any]:
         if limited:
             reply = "\n".join(results) + "\nSearch limit reached."
@@ -120,14 +127,21 @@ def search_files(folder: str | Path | None = None, query: str = "", limit: int =
         return {"reply": reply, "ok": True, "paths": results, "limited": limited}
 
     for directory, dirs, files in os.walk(root, followlinks=False):
-        dirs[:] = [d for d in dirs if d not in skip
-                   and not Path(directory, d).is_symlink()
-                   and not Path(directory, d).is_junction()]
+        current_depth = len(Path(directory).parts) - root_depth
+        # Prune directories that would exceed max_depth before descending
+        if current_depth >= max_depth:
+            dirs[:] = []
+        else:
+            dirs[:] = [d for d in dirs if d not in skip
+                       and not Path(directory, d).is_symlink()
+                       and not Path(directory, d).is_junction()]
+        if current_depth > max_depth:
+            continue
         for dirname in dirs:
             visited += 1
             if query.casefold() in dirname.casefold():
                 results.append(str(Path(directory, dirname).resolve()))
-            if len(results) >= limit or visited >= 200000:
+            if len(results) >= limit or visited >= 50000:
                 return finish(True)
         for fname in files:
             visited += 1
@@ -135,7 +149,7 @@ def search_files(folder: str | Path | None = None, query: str = "", limit: int =
                 path = Path(directory, fname).resolve()
                 if path.is_relative_to(root):
                     results.append(str(path))
-            if len(results) >= limit or visited >= 200000:
+            if len(results) >= limit or visited >= 50000:
                 return finish(True)
     return finish()
 

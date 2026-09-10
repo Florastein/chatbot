@@ -288,7 +288,10 @@ class AssistantApp:
     def __init__(self, root, store=None):
         self.root = root
         self.store = store or Store()
-        self.assistant = CustomAssistant(store=self.store)
+        self.assistant = CustomAssistant(
+            store=self.store,
+            on_save=self._on_save_callback,
+        )
         self.events: queue.Queue = queue.Queue()
         self.search_events: queue.Queue = queue.Queue()
         self.busy = False
@@ -647,6 +650,14 @@ class AssistantApp:
     # Messaging
     # ------------------------------------------------------------------
 
+    def _on_save_callback(self, kind: str) -> None:
+        """Called by CustomAssistant after a note or task is saved via chat.
+
+        Runs on the assistant worker thread, so schedule the Treeview refresh
+        back on the Tk main thread via ``root.after``.
+        """
+        self.root.after(0, lambda: self._reload_items(kind))
+
     def _record(self, role, content):
         self.store.append(role, content)
         self.chat_feed.add(role, content)
@@ -665,16 +676,6 @@ class AssistantApp:
             return
         if len(text) > MSG_LIMIT:
             messagebox.showerror("Message too long", "Keep messages under 26,000 characters.")
-            return
-        if text.startswith("/"):
-            try:
-                reply = self._command(text)
-            except Exception as exc:
-                messagebox.showerror("Command failed", str(exc))
-                return
-            self._record("user", text)
-            self._record("assistant", reply)
-            self.entry.delete("1.0", "end")
             return
 
         self._record("user", text)
@@ -709,35 +710,6 @@ class AssistantApp:
             return
         if not self.events.empty():  # drain any remaining events
             self.root.after(20, self._poll)
-
-    # ------------------------------------------------------------------
-    # Slash commands
-    # ------------------------------------------------------------------
-
-    def _command(self, text):
-        command, _, argument = text.partition(" ")
-        if command in ("/note", "/todo"):
-            kind = "note" if command == "/note" else "task"
-            self.store.add(kind, argument)
-            self._reload_items(kind)
-            return "Saved."
-        if command in ("/notes", "/todos"):
-            rows = self.store.items("note" if command == "/notes" else "task")
-            return "\n".join(f"{i}. {'[Done] ' if done else ''}{c}"
-                             for i, c, done in rows) or "Nothing saved yet."
-        if command == "/time":
-            return datetime.now().astimezone().strftime("%A, %d %B %Y, %H:%M %Z")
-        if command == "/open":
-            result = open_app(argument)
-            return result.get("reply", f"Opened {argument}.")
-        if command == "/help":
-            return (
-                "Commands: /note TEXT, /todo TEXT, /notes, /todos, /time, "
-                "/open notepad, /open calculator, /help.\n"
-                "Or just chat naturally — I can search files, open apps, "
-                "and manage notes and tasks."
-            )
-        return "Unknown command. Try /help."
 
     # ------------------------------------------------------------------
     # Files & apps
@@ -827,7 +799,11 @@ class AssistantApp:
             tree.delete(item)
         rows = self.store.items(kind)
         for item_id, content, done in rows:
-            label = ("✓ " if done else "○ ") if kind == "task" else content
+            if kind == "task":
+                # Show full content with a status prefix so the task is readable
+                label = ("✓  " if done else "○  ") + content
+            else:
+                label = content
             tree.insert("", "end", iid=str(item_id), text=label,
                         tags=("done",) if done else ())
         if rows:
