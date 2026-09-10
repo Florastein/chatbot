@@ -1,73 +1,477 @@
-{"intents": [
-        {"tag": "greeting",
-         "patterns": ["Hi there", "How are you", "Is anyone there?","Hey","Hola", "Hello", "Good day"],
-         "responses": ["Hello, thanks for asking", "Good to see you again", "Hi there, how can I help?"],
-         "context": [""]
-        },
-        {"tag": "goodbye",
-         "patterns": ["Bye", "See you later", "Goodbye", "Nice chatting to you, bye", "Till next time"],
-         "responses": ["See you!", "Have a nice day", "Bye! Come back again soon."],
-         "context": [""]
-        },
-        {"tag": "thanks",
-         "patterns": ["Thanks", "Thank you", "That's helpful", "Awesome, thanks", "Thanks for helping me"],
-         "responses": ["Happy to help!", "Any time!", "My pleasure"],
-         "context": [""]
-        },
-        {"tag": "noanswer",
-         "patterns": [],
-         "responses": ["Sorry, can't understand you", "Please give me more info", "Not sure I understand"],
-         "context": [""]
-        },
-        {"tag": "options",
-         "patterns": ["How you could help me?", "What you can do?", "What help you provide?", "How you can be helpful?", "What support is offered"],
-         "responses": ["I can guide you through Adverse drug reaction list, Blood pressure tracking, Hospitals and Pharmacies", "Offering support for Adverse drug reaction, Blood pressure, Hospitals and Pharmacies"],
-         "context": [""]
-        },
-        {"tag": "adverse_drug",
-         "patterns": ["How to check Adverse drug reaction?", "Open adverse drugs module", "Give me a list of drugs causing adverse behavior", "List all drugs suitable for patient with adverse reaction", "Which drugs dont have adverse reaction?" ],
-         "responses": ["Navigating to Adverse drug reaction module"],
-         "context": [""]
-        },
-        {"tag": "blood_pressure",
-         "patterns": ["Open blood pressure module", "Task related to blood pressure", "Blood pressure data entry", "I want to log blood pressure results", "Blood pressure data management" ],
-         "responses": ["Navigating to Blood Pressure module"],
-         "context": [""]
-        },
-        {"tag": "blood_pressure_search",
-         "patterns": ["I want to search for blood pressure result history", "Blood pressure for patient", "Load patient blood pressure result", "Show blood pressure results for patient", "Find blood pressure results by ID" ],
-         "responses": ["Please provide Patient ID", "Patient ID?"],
-         "context": ["search_blood_pressure_by_patient_id"]
-        },
-        {"tag": "search_blood_pressure_by_patient_id",
-         "patterns": [],
-         "responses": ["Loading Blood pressure result for Patient"],
-         "context": [""]
-        },
-        {"tag": "pharmacy_search",
-         "patterns": ["Find me a pharmacy", "Find pharmacy", "List of pharmacies nearby", "Locate pharmacy", "Search pharmacy" ],
-         "responses": ["Please provide pharmacy name"],
-         "context": ["search_pharmacy_by_name"]
-        },
-        {"tag": "search_pharmacy_by_name",
-         "patterns": [],
-         "responses": ["Loading pharmacy details"],
-         "context": [""]
-        },
-        {"tag": "hospital_search",
-         "patterns": ["Lookup for hospital", "Searching for hospital to transfer patient", "I want to search hospital data", "Hospital lookup for patient", "Looking up hospital details" ],
-         "responses": ["Please provide hospital name or location"],
-         "context": ["search_hospital_by_params"]
-        },
-        {"tag": "search_hospital_by_params",
-         "patterns": [],
-         "responses": ["Please provide hospital type"],
-         "context": ["search_hospital_by_type"]
-        },
-        {"tag": "search_hospital_by_type",
-         "patterns": [],
-         "responses": ["Loading hospital details"],
-         "context": [""]
-        }
-   ]
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": [
+        "Hi",
+        "Hello",
+        "Hey",
+        "Good morning",
+        "Good evening",
+        "What's up",
+        "Howdy",
+        "Hi there",
+        "Hey bestie",
+        "Hi dear",
+        "Good morning bestie",
+        "Hello there",
+        "Hey hey",
+        "Good afternoon",
+        "Sup",
+        "Bestie"
+      ],
+      "responses": [
+        "Hello! How can I help you?",
+        "Hey there! What can I do for you?",
+        "Hi! Ready when you are."
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "goodbye",
+      "patterns": [
+        "Bye",
+        "Goodbye",
+        "See you later",
+        "Talk to you later",
+        "I'm done",
+        "Quit",
+        "Exit",
+        "Talk later",
+        "Catch you later",
+        "Good night",
+        "Bye for now",
+        "We'll talk later"
+      ],
+      "responses": [
+        "Goodbye!",
+        "See you next time!",
+        "Take care!"
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "thanks",
+      "patterns": [
+        "Thanks",
+        "Thank you",
+        "That's helpful",
+        "Awesome",
+        "Great",
+        "Perfect",
+        "Thanks bestie",
+        "Thank you so much",
+        "Thanks dear",
+        "Thank you please",
+        "Thanks for that",
+        "I appreciate it"
+      ],
+      "responses": [
+        "Happy to help!",
+        "Any time!",
+        "Glad I could help."
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "options",
+      "patterns": [
+        "What can you do",
+        "Help",
+        "What are your features",
+        "How can you help me",
+        "What do you know",
+        "Show me what you can do",
+        "Capabilities",
+        "Commands",
+        "Pls help me",
+        "Help me please",
+        "What can you help with",
+        "Can you help me pls"
+      ],
+      "responses": [
+        "I can: open apps, search files, list directories, manage notes and tasks, check the time, and inspect Python code. Just ask!"
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "open_app",
+      "patterns": [
+        "Open notepad",
+        "Launch calculator",
+        "Start notepad",
+        "Run calculator",
+        "Open the notepad app",
+        "Can you open notepad",
+        "Fire up calculator",
+        "I need notepad",
+        "Open calculator for me",
+        "Start the notepad application",
+        "Launch the calculator app",
+        "Open text editor",
+        "Open the calculator"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "find_file",
+      "patterns": [
+        "Find file",
+        "Search for file",
+        "Where is my file",
+        "Locate a file",
+        "Find a document",
+        "Search for a file",
+        "Look for files named",
+        "I'm looking for a file",
+        "Can you find a file for me",
+        "Where did I put that file",
+        "Search for documents",
+        "Find files containing",
+        "Look for my report",
+        "Search for python files",
+        "Find config files",
+        "Where is requirements.txt"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "list_dir",
+      "patterns": [
+        "List directory",
+        "What's in this folder",
+        "Show me the files",
+        "List the contents",
+        "What files are here",
+        "Show directory contents",
+        "List what's in the current folder",
+        "What's in the directory",
+        "Show me what's in this folder",
+        "List files here"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "get_time",
+      "patterns": [
+        "What time is it",
+        "What's the time",
+        "Tell me the time",
+        "Current time",
+        "What time",
+        "Do you know the time",
+        "What's today's date",
+        "What's the date",
+        "What day is it"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "system_info",
+      "patterns": [
+        "System info",
+        "What's my system",
+        "Show system information",
+        "What platform am I on",
+        "What OS am I using",
+        "System details",
+        "Computer information",
+        "What's my computer running"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "add_note",
+      "patterns": [
+        "Save a note",
+        "Add a note",
+        "Create a note",
+        "Write down",
+        "I need to remember",
+        "Make a note",
+        "Save this for later",
+        "Note to self",
+        "Take a note",
+        "Remember this",
+        "Please save a note",
+        "Pls take a note",
+        "Make a note for me please"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "add_task",
+      "patterns": [
+        "Add a task",
+        "Create a task",
+        "Add to my to-do list",
+        "I need to do",
+        "Set a reminder",
+        "Add todo",
+        "New task",
+        "Create a todo",
+        "Put this on my list",
+        "I need to remember to do",
+        "Please add a task",
+        "Pls create a task",
+        "Add a todo for me please"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "list_notes",
+      "patterns": [
+        "Show my notes",
+        "List my notes",
+        "What notes do I have",
+        "View notes",
+        "Show notes",
+        "Display my notes",
+        "What have I saved",
+        "Show me my notes",
+        "Show my notes pls",
+        "My saved notes please"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "list_tasks",
+      "patterns": [
+        "Show my tasks",
+        "List my to-dos",
+        "What tasks do I have",
+        "View tasks",
+        "Show todos",
+        "Display my tasks",
+        "What's on my to-do list",
+        "Show me my tasks",
+        "Show my tasks pls",
+        "My todo list please"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "inspect_code",
+      "patterns": [
+        "Check my code",
+        "Inspect this Python file",
+        "Analyze this code",
+        "Check Python syntax",
+        "Parse this source",
+        "Review this Python code",
+        "Is this Python valid",
+        "Debug this code"
+      ],
+      "responses": [],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "check_in",
+      "patterns": [
+        "How are you",
+        "How are you doing",
+        "How you dey",
+        "How far",
+        "Ur side",
+        "What about you",
+        "How's your day",
+        "You good"
+      ],
+      "responses": [
+        "I'm here and ready to help. How are things on your side?"
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "feeling_ok",
+      "patterns": [
+        "I'm fine please",
+        "I am fine",
+        "I'm ok",
+        "I dey o",
+        "I'm doing well",
+        "All good here",
+        "I'm alright"
+      ],
+      "responses": [
+        "Good to hear. What's on your mind?"
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "acknowledgment",
+      "patterns": [
+        "Alright",
+        "Oh okay",
+        "Ohk",
+        "Ohk o",
+        "Okay please",
+        "Okay then",
+        "Yeah",
+        "Oh yeah",
+        "I've heard you",
+        "I see",
+        "Got it",
+        "Ok",
+        "Yh",
+        "Yes please",
+        "Alright bestie",
+        "Ok bestie"
+      ],
+      "responses": [
+        "Alright."
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "apology",
+      "patterns": [
+        "Sorry",
+        "Sorry wai",
+        "I'm sorry",
+        "My bad",
+        "Sorry about that",
+        "Sorry please",
+        "Oh sorry"
+      ],
+      "responses": [
+        "No worries."
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "share_something",
+      "patterns": [
+        "Can I tell you something",
+        "Can we talk",
+        "I want to tell you something",
+        "I feel like talking",
+        "There's something on my mind",
+        "Can I share something"
+      ],
+      "responses": [
+        "Go ahead. What's on your mind?"
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "wait",
+      "patterns": [
+        "A minute pls",
+        "One minute please",
+        "Wait a bit",
+        "Give me a moment",
+        "Hold on please",
+        "Wait small",
+        "I'll be right back"
+      ],
+      "responses": [
+        "Take your time."
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "clarification",
+      "patterns": [
+        "What do you mean",
+        "I don't understand",
+        "Please explain",
+        "Explain that again",
+        "How do you mean",
+        "I didn't get that",
+        "What does that mean",
+        "I don't get you",
+        "Why is that"
+      ],
+      "responses": [
+        "Which part should we go over?"
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "laughter",
+      "patterns": [
+        "Haha",
+        "Hahaha",
+        "Lol",
+        "Lmao",
+        "That's funny",
+        "You made me laugh"
+      ],
+      "responses": [
+        "Haha, fair enough."
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "food_check_in",
+      "patterns": [
+        "Have you eaten",
+        "What have you eaten",
+        "Did you eat",
+        "Have you had breakfast",
+        "Have you had lunch",
+        "Have you had dinner"
+      ],
+      "responses": [
+        "I don't eat, but thanks for checking. Have you had something?"
+      ],
+      "context": [
+        ""
+      ]
+    }
+  ]
 }
