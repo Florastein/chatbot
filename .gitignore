@@ -1,4 +1,6 @@
 __pycache__/
 data/
 *.log
+WhatsApp*.txt
+.history-cleanup.git/
 WhatsApp Chat with Bestie🤍.txt
