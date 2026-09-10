@@ -728,8 +728,8 @@ class AssistantApp:
         if command == "/time":
             return datetime.now().astimezone().strftime("%A, %d %B %Y, %H:%M %Z")
         if command == "/open":
-            open_app(argument)
-            return f"Opened {argument}."
+            result = open_app(argument)
+            return result.get("reply", f"Opened {argument}.")
         if command == "/help":
             return (
                 "Commands: /note TEXT, /todo TEXT, /notes, /todos, /time, "
