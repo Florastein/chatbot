@@ -70,8 +70,6 @@ def _app_command(name: str) -> list[str] | None:
     mapping: dict[str, dict[str, Any]] = {
         "notepad": {
             "win32": [str(Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "notepad.exe")],
-            "linux": ["xdg-open", ""],
-            "file": True,
         },
         "calculator": {
             "win32": [str(Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "calc.exe")],
@@ -84,10 +82,7 @@ def _app_command(name: str) -> list[str] | None:
     if IS_WINDOWS and "win32" in entry:
         return entry["win32"]
     if IS_LINUX and "linux" in entry:
-        cmd = list(entry["linux"])
-        if entry.get("file"):
-            cmd[-1] = ""  # notepad has no URI scheme on Linux; open empty
-        return cmd
+        return entry["linux"]
     return None
 
 
@@ -97,7 +92,7 @@ def open_application(app_name: str) -> dict[str, Any]:
     if cmd is None:
         available = ", ".join(sorted(
             n for n, e in {
-                "notepad": {"win32": 1, "linux": 1},
+                "notepad": {"win32": 1},
                 "calculator": {"win32": 1, "linux": 1},
             }.items()
             if (IS_WINDOWS and "win32" in e) or (IS_LINUX and "linux" in e)

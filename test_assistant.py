@@ -157,6 +157,21 @@ class CustomAssistantTests(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0][1], "buy milk")
 
+    def test_personality_introduction(self):
+        reply = self.assistant.reply("who are you")
+        self.assertIn("local desktop assistant", reply)
+        self.assertFalse(self.assistant.state.is_pending())
+
+    def test_greetings_vary(self):
+        first = self.assistant.reply("hello")
+        second = self.assistant.reply("hello")
+        self.assertNotEqual(first, second)
+
+    def test_conversational_text_saved_as_note(self):
+        self.assistant.reply("save a note")
+        self.assertEqual(self.assistant.reply("who are you"), "Note saved.")
+        self.assertEqual(self.store.items("note")[0][1], "who are you")
+
     def test_add_task_flow(self):
         reply = self.assistant.reply("add a task")
         self.assertIn("task", reply.lower())

@@ -21,9 +21,9 @@
         "Bestie"
       ],
       "responses": [
-        "Hello! How can I help you?",
-        "Hey there! What can I do for you?",
-        "Hi! Ready when you are."
+        "Hey! What shall we work on today?",
+        "Hello! Got a thought to save or a task to tackle?",
+        "Hey there. Ready when you are."
       ],
       "context": [
         ""
@@ -46,9 +46,9 @@
         "We'll talk later"
       ],
       "responses": [
-        "Goodbye!",
-        "See you next time!",
-        "Take care!"
+        "Take care. See you next time!",
+        "Catch you later. One thing at a time!",
+        "Bye for now. Hope the rest of your day goes well."
       ],
       "context": [
         ""
@@ -71,9 +71,9 @@
         "I appreciate it"
       ],
       "responses": [
-        "Happy to help!",
-        "Any time!",
-        "Glad I could help."
+        "You're welcome. Happy to help!",
+        "Any time. That's one thing sorted!",
+        "Glad that helped."
       ],
       "context": [
         ""
@@ -315,7 +315,8 @@
         "You good"
       ],
       "responses": [
-        "I'm here and ready to help. How are things on your side?"
+        "I'm here and ready to help. How are things on your side?",
+        "Ready for our next little project. How's your day going?"
       ],
       "context": [
         ""
@@ -333,7 +334,8 @@
         "I'm alright"
       ],
       "responses": [
-        "Good to hear. What's on your mind?"
+        "Good to hear. What's on your mind?",
+        "Glad things are going well. What shall we do next?"
       ],
       "context": [
         ""
@@ -360,7 +362,9 @@
         "Ok bestie"
       ],
       "responses": [
-        "Alright."
+        "Alright. Ready when you are.",
+        "Got it.",
+        "Okay, let's take it from there."
       ],
       "context": [
         ""
@@ -378,7 +382,8 @@
         "Oh sorry"
       ],
       "responses": [
-        "No worries."
+        "No worries. We can keep going.",
+        "It's okay. Take your time."
       ],
       "context": [
         ""
@@ -395,7 +400,8 @@
         "Can I share something"
       ],
       "responses": [
-        "Go ahead. What's on your mind?"
+        "Go ahead. What's on your mind? I can handle simple replies, though I may miss the nuance.",
+        "You can share. My conversation skills are limited, but I can help save a thought or turn it into a task."
       ],
       "context": [
         ""
@@ -413,7 +419,8 @@
         "I'll be right back"
       ],
       "responses": [
-        "Take your time."
+        "Take your time. No rush.",
+        "Sure. Ready whenever you are."
       ],
       "context": [
         ""
@@ -433,7 +440,7 @@
         "Why is that"
       ],
       "responses": [
-        "Which part should we go over?"
+        "Let's make it simpler. I can save notes, add tasks, find files, and open supported apps. Try 'save a note'."
       ],
       "context": [
         ""
@@ -450,7 +457,8 @@
         "You made me laugh"
       ],
       "responses": [
-        "Haha, fair enough."
+        "Ha, glad that got a laugh.",
+        "A little laughter helps."
       ],
       "context": [
         ""
@@ -467,7 +475,26 @@
         "Have you had dinner"
       ],
       "responses": [
-        "I don't eat, but thanks for checking. Have you had something?"
+        "No meals for me; I'm software. Have you had something?",
+        "I don't eat, but thanks for checking. Hope you've had a chance to grab a bite."
+      ],
+      "context": [
+        ""
+      ]
+    },
+    {
+      "tag": "personality",
+      "patterns": [
+        "Who are you",
+        "What is your name",
+        "What's your name",
+        "Describe yourself",
+        "What is your personality",
+        "What's your personality",
+        "Tell me about yourself"
+      ],
+      "responses": [
+        "I'm Sam, your local desktop assistant: warm, practical, and a little playful. I like keeping things simple, one task at a time. I'm software, so I don't have feelings or a life outside this app. I can help with notes, tasks, files, and a few desktop tools."
       ],
       "context": [
         ""

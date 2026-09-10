@@ -47,7 +47,12 @@ def _extract_query(text: str) -> str | None:
     )
     cleaned = re.sub(r"^(?:the\s+|a\s+|my\s+)", "", cleaned, flags=re.IGNORECASE)
     cleaned = cleaned.strip().rstrip("?")
-    return cleaned if cleaned else None
+    if not cleaned:
+        return None
+    # Treat placeholder words as missing input
+    if cleaned.casefold() in {"file", "files", "document", "documents", "folder", "folders"}:
+        return None
+    return cleaned
 
 
 def _extract_folder(text: str) -> str | None:
@@ -138,6 +143,7 @@ class CustomAssistant:
         # Load canned responses for non-tool intents (greeting, goodbye, etc.)
         import json
         self.responses: dict[str, list[str]] = {}
+        self._response_counts: dict[str, int] = {}
         try:
             intents_path = BASE / "intents.json"
             data = json.loads(intents_path.read_text(encoding="utf-8"))
@@ -208,6 +214,8 @@ class CustomAssistant:
             return "list_dir"
         if re.search(r"\b(?:system info|system information|what os|what platform|system details)\b", lowered):
             return "system_info"
+        if re.fullmatch(r"(?:who are you|what is your name|what's your name|describe yourself|what is your personality|what's your personality)[?!.]*", lowered):
+            return "personality"
         if re.search(r"\b(?:hi|hello|hey|howdy|good morning|good afternoon|good evening|how are you|what's up)\b", lowered):
             return "greeting"
         if re.search(r"\b(?:thanks|thank you|thx|awesome|great|perfect|sweet)\b", lowered):
@@ -245,7 +253,10 @@ class CustomAssistant:
 
         # Canned responses for greeting / goodbye / thanks / etc.
         if tag in self.responses and self.responses[tag]:
-            return self.responses[tag][0]
+            choices = self.responses[tag]
+            index = self._response_counts.get(tag, 0)
+            self._response_counts[tag] = index + 1
+            return choices[index % len(choices)]
 
         return self._fallback_reply()
 
@@ -379,6 +390,6 @@ class CustomAssistant:
         capabilities = [t.description for t in self.registry.all_tools()]
         capabilities.extend(["save notes", "manage tasks"])
         return (
-            "I couldn't confidently match that request. "
+            "I couldn't quite work out what you need. Try a short request, like 'save a note'. "
             f"I can: {', '.join(capabilities)}."
         )

@@ -21,7 +21,7 @@ from tkinter import ttk
 
 from assistant_core import CustomAssistant, Store, find_files, open_app, read_attachment
 
-APP_NAME = "Personal Assistant"
+APP_NAME = "Sam"
 MSG_LIMIT = 26000
 VIEWS = (("chat", "Chat"), ("notes", "Notes"), ("tasks", "Tasks"), ("files", "Files & Apps"))
 

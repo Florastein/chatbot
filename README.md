@@ -1,8 +1,8 @@
-# Personal Assistant
+# Sam
 
 **Your machine. Your model. Your everyday assistant.**
 
-Personal Assistant turns familiar requests into useful local actions. Save a thought before you lose it, check your task list, find a document, open a utility, or inspect Python source from a single desktop workspace.
+Sam turns familiar requests into useful local actions. Save a thought before you lose it, check your task list, find a document, open a utility, or inspect Python source from a single desktop workspace.
 
 The application runs on a custom-trained intent model built with Python's standard library. Its training examples are yours to inspect, edit, and expand. No pretrained weights, inference servers, API keys, subscriptions, or third-party Python packages are required.
 
@@ -170,6 +170,19 @@ For example:
 Use plain `cancel` to leave a natural-language follow-up.
 
 ## How the Model Works
+
+### Personality
+
+The assistant's voice is warm, calm, practical, and lightly playful. It uses
+short replies, gives patient guidance, and is honest about being software with
+limited conversational abilities. Ask `who are you` or `what is your personality`
+for an introduction.
+
+Conversational replies cycle through each intent's `responses` in `intents.json`,
+so repeated greetings vary within a session. Edit those responses and restart
+to customize its voice. Tool results remain factual, and note/task follow-ups
+still collect your exact text. This personality uses local response templates;
+it does not add a generative model or learn from private chat exports.
 
 The classifier uses **multinomial Naive Bayes**. Training counts words associated with each intent and calculates smoothed word likelihoods. During prediction, those learned weights rank the possible intents for a message.
 
